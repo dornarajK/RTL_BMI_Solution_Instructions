@@ -43,8 +43,46 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+                    powershell '''
+                        $ErrorActionPreference = 'Stop'
+                        $reportPath = Join-Path $env:WORKSPACE 'target/sonar/report-task.txt'
+                        if (-not (Test-Path $reportPath)) {
+                            throw "SonarScanner task report not found: $reportPath"
+                        }
+
+                        $report = @{}
+                        Get-Content $reportPath | ForEach-Object {
+                            if ($_ -match '^([^=]+)=(.*)$') { $report[$matches[1]] = $matches[2] }
+                        }
+                        $ceTaskUrl = $report['ceTaskUrl']
+                        if (-not $ceTaskUrl) { throw 'ceTaskUrl is missing from report-task.txt' }
+
+                        $authBytes = [Text.Encoding]::ASCII.GetBytes("$($env:SONAR_TOKEN):")
+                        $headers = @{ Authorization = 'Basic ' + [Convert]::ToBase64String($authBytes) }
+                        $task = $null
+                        for ($attempt = 1; $attempt -le 120; $attempt++) {
+                            $taskResponse = Invoke-RestMethod -Uri $ceTaskUrl -Headers $headers
+                            $task = $taskResponse.task
+                            Write-Host "SonarQube background task status: $($task.status)"
+                            if ($task.status -in @('SUCCESS', 'FAILED', 'CANCELED')) { break }
+                            Start-Sleep -Seconds 5
+                        }
+
+                        if (-not $task -or $task.status -ne 'SUCCESS') {
+                            throw "SonarQube background task did not succeed. Last status: $($task.status)"
+                        }
+                        if (-not $task.analysisId) { throw 'SonarQube completed without returning an analysisId' }
+
+                        $sonarBaseUrl = [Uri]$ceTaskUrl
+                        $qualityGateUrl = "$($sonarBaseUrl.Scheme)://$($sonarBaseUrl.Authority)/api/qualitygates/project_status?analysisId=$($task.analysisId)"
+                        $gateResponse = Invoke-RestMethod -Uri $qualityGateUrl -Headers $headers
+                        $gateStatus = $gateResponse.projectStatus.status
+                        Write-Host "SonarQube Quality Gate: $gateStatus"
+                        if ($gateStatus -ne 'OK') {
+                            throw "SonarQube Quality Gate did not pass: $gateStatus"
+                        }
+                    '''
                 }
             }
         }
