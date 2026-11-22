@@ -26,7 +26,7 @@ class BMIResultServiceTest {
 
     @Test
     void publicSaveResultHandlesUnavailableDatabaseWithoutThrowing() {
-        BMIResultService.saveResult(70, 1.75, 22.86, "en");
+        assertDoesNotThrow(() -> BMIResultService.saveResult(70, 1.75, 22.86, "en"));
     }
 
     @Test
