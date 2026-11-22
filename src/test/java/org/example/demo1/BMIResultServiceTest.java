@@ -24,6 +24,11 @@ class BMIResultServiceTest {
     }
 
     @Test
+    void publicSaveResultHandlesUnavailableDatabaseWithoutThrowing() {
+        BMIResultService.saveResult(70, 1.75, 22.86, "en");
+    }
+
+    @Test
     void handlesConnectionFailureWithoutThrowing() throws Exception {
         BMIResultService.saveResult(
                 () -> { throw new SQLException("Simulated database outage"); },

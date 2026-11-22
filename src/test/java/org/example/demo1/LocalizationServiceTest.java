@@ -34,6 +34,11 @@ class LocalizationServiceTest {
     }
 
     @Test
+    void publicLookupReturnsEmptyMapWhenLocalDatabaseIsUnavailable() {
+        assertEquals(Map.of(), LocalizationService.getLocalizedStrings(Locale.GERMAN));
+    }
+
+    @Test
     void returnsEmptyMapWhenTheDatabaseConnectionFails() throws Exception {
         assertEquals(Map.of(), LocalizationService.getLocalizedStrings(
                 Locale.GERMAN,
