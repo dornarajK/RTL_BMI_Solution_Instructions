@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK21'
         maven 'Maven3'
     }
 
@@ -11,6 +10,8 @@ pipeline {
     }
 
     environment {
+        JAVA_HOME = 'C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.13.9-hotspot'
+        PATH = "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.13.9-hotspot\\bin;${env.PATH}"
         SONARQUBE_SERVER = 'SonarQubeServer'
         DOCKERHUB_CREDENTIALS_ID = 'Docker_Hub'
     }
