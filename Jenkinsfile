@@ -29,7 +29,9 @@ pipeline {
 
         stage('Build and Test with Coverage') {
             steps {
-                bat 'mvn -B clean verify'
+                withEnv(['JAVA_HOME=C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.13.9-hotspot', 'PATH+JDK21=C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.13.9-hotspot\\bin']) {
+                    bat 'where java & java -version & mvn -version & mvn -B clean verify'
+                }
             }
         }
 
@@ -37,7 +39,9 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                     withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                        bat 'mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar -Dsonar.projectKey=BMI_Cal -Dsonar.projectName=BMI_Cal -Dsonar.token=%SONAR_TOKEN%'
+                        withEnv(['JAVA_HOME=C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.13.9-hotspot', 'PATH+JDK21=C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.13.9-hotspot\\bin']) {
+                            bat 'where java & java -version & mvn -version & mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar -Dsonar.projectKey=BMI_Cal -Dsonar.projectName=BMI_Cal -Dsonar.token=%SONAR_TOKEN%'
+                        }
                     }
                 }
             }
