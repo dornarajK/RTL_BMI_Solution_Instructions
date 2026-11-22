@@ -86,6 +86,15 @@ pipeline {
                         $gateStatus = $gateResponse.projectStatus.status
                         Write-Host "SonarQube Quality Gate: $gateStatus"
                         if ($gateStatus -ne 'OK') {
+                            $failedConditions = @($gateResponse.projectStatus.conditions | Where-Object { $_.status -eq 'ERROR' })
+                            if ($failedConditions.Count -gt 0) {
+                                Write-Host 'Failed SonarQube Quality Gate conditions:'
+                                foreach ($condition in $failedConditions) {
+                                    Write-Host (" - {0}: actual={1}, {2} threshold={3}" -f $condition.metricKey, $condition.actualValue, $condition.comparator, $condition.errorThreshold)
+                                }
+                            } else {
+                                Write-Host "No condition details were returned. Review: $qualityGateUrl"
+                            }
                             throw "SonarQube Quality Gate did not pass: $gateStatus"
                         }
                     '''

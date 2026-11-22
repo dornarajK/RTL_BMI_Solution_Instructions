@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -29,10 +30,10 @@ class BMIResultServiceTest {
     }
 
     @Test
-    void handlesConnectionFailureWithoutThrowing() throws Exception {
-        BMIResultService.saveResult(
+    void handlesConnectionFailureWithoutThrowing() {
+        assertDoesNotThrow(() -> BMIResultService.saveResult(
                 () -> { throw new SQLException("Simulated database outage"); },
-                70, 1.75, 22.86, "en");
+                70, 1.75, 22.86, "en"));
     }
 
     @Test
