@@ -124,10 +124,19 @@ pipeline {
         stage('Push Docker Image to Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', env.DOCKERHUB_CREDENTIALS_ID) {
-                        def image = docker.image(env.DOCKER_IMAGE)
-                        image.push()
-                        image.push('latest')
+                    if (!env.DOCKER_IMAGE?.trim()) {
+                        error('Docker image name is missing. Check the Build Docker Image stage and DOCKERHUB_REPO parameter.')
+                    }
+                    try {
+                        docker.withRegistry('https://index.docker.io/v1/', env.DOCKERHUB_CREDENTIALS_ID) {
+                            def image = docker.image(env.DOCKER_IMAGE)
+                            image.push()
+                            image.push('latest')
+                        }
+                    } catch (Exception e) {
+                        echo "Docker Hub push failed for ${env.DOCKER_IMAGE}: ${e.message}"
+                        echo "Check that Jenkins credential '${env.DOCKERHUB_CREDENTIALS_ID}' is a username/password credential containing your Docker Hub username and access token, and that DOCKERHUB_REPO uses the same namespace with push access."
+                        throw e
                     }
                 }
             }
