@@ -38,28 +38,35 @@ public class BMIResultService {
     }
 
     public static void saveResult(double weight, double height, double bmi, String language) {
+        saveResult(() -> DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD), weight, height, bmi, language);
+    }
 
-        String query = "INSERT INTO bmi_results (weight, height, bmi, language) VALUES (?, ?, ?, ?)";
-
-        System.out.println("🔎 Attempting DB connection to: " + DB_URL);
-
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-
-            stmt.setDouble(1, weight);
-            stmt.setDouble(2, height);
-            stmt.setDouble(3, bmi);
-            stmt.setString(4, language);
-
-            stmt.executeUpdate();
-
+    static void saveResult(ConnectionProvider provider, double weight, double height, double bmi, String language) {
+        System.out.println("Attempting DB connection to: " + DB_URL);
+        try (Connection conn = provider.open()) {
+            saveResult(conn, weight, height, bmi, language);
             System.out.println("BMI result saved successfully.");
-
         } catch (SQLException e) {
             System.err.println("Database connection failed.");
             System.err.println("URL: " + DB_URL);
             System.err.println("User: " + DB_USER);
-            e.printStackTrace();
+        }
+    }
+
+    @FunctionalInterface
+    interface ConnectionProvider {
+        Connection open() throws SQLException;
+    }
+
+    static void saveResult(Connection conn, double weight, double height, double bmi, String language)
+            throws SQLException {
+        String query = "INSERT INTO bmi_results (weight, height, bmi, language) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setDouble(1, weight);
+            stmt.setDouble(2, height);
+            stmt.setDouble(3, bmi);
+            stmt.setString(4, language);
+            stmt.executeUpdate();
         }
     }
 }

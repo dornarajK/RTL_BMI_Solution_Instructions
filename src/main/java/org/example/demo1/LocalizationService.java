@@ -31,25 +31,38 @@ public class LocalizationService {
     }
 
     public static Map<String, String> getLocalizedStrings(Locale locale) {
+        String dbUrl = getDatabaseUrl();
+        return getLocalizedStrings(locale, () -> DriverManager.getConnection(dbUrl, DB_USER, DB_PASSWORD));
+    }
+
+    static Map<String, String> getLocalizedStrings(Locale locale, ConnectionProvider provider) {
+        String dbUrl = getDatabaseUrl();
+        try (Connection conn = provider.open()) {
+            return getLocalizedStrings(conn, locale);
+        } catch (SQLException e) {
+            System.err.println("Database connection failed: " + dbUrl);
+            return new HashMap<>();
+        }
+    }
+
+    @FunctionalInterface
+    interface ConnectionProvider {
+        Connection open() throws SQLException;
+    }
+
+    static Map<String, String> getLocalizedStrings(Connection conn, Locale locale) throws SQLException {
         Map<String, String> strings = new HashMap<>();
         String lang = locale.getLanguage();
-        String dbUrl = getDatabaseUrl();
+        String query = "SELECT `key`, value FROM localization_strings WHERE language = ?";
 
-        try (Connection conn = DriverManager.getConnection(dbUrl, DB_USER, DB_PASSWORD)) {
-            String query = "SELECT `key`, value FROM localization_strings WHERE language = ?";
-            try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                stmt.setString(1, lang);
-                ResultSet rs = stmt.executeQuery();
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, lang);
+            try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     strings.put(rs.getString("key"), rs.getString("value"));
                 }
             }
-            System.out.println("Loaded localization strings for language: " + lang + " from " + dbUrl);
-        } catch (SQLException e) {
-            System.err.println("Database connection failed: " + dbUrl);
-            e.printStackTrace();
         }
-
         return strings;
     }
 }
