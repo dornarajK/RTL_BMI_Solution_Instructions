@@ -1,0 +1,39 @@
+services:
+  db:
+    image: mariadb:11
+    container_name: bmi-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-local-dev-only}
+      MYSQL_DATABASE: ${DB_NAME:-bmi_localization}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  app:
+    build: .
+    container_name: bmi-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DISPLAY: ${DISPLAY:-host.docker.internal:0.0}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-bmi_localization}
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD:-local-dev-only}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: on-failure
+
+volumes:
+  db_data:

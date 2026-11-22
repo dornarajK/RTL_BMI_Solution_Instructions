@@ -1,0 +1,11 @@
+Test Case,Feature,Preconditions,Steps,Expected Result,Actual Result,Status,Tester,Execution Date,Comments
+TC01,Valid BMI calculation,"Application running; database available","Enter 70 kg and 175 cm; select Calculate","BMI result displays approximately 22.86 and is saved",,,,,
+TC02,Second valid BMI calculation,"Application running; database available","Enter 62 kg and 160 cm; select Calculate","BMI result displays approximately 24.22 and is saved",,,,,
+TC03,Invalid weight text,"Application running","Enter abc kg and 175 cm; select Calculate","Localized invalid-input message appears; no result is saved",,,,,
+TC04,Invalid height text,"Application running","Enter 70 kg and xyz cm; select Calculate","Localized invalid-input message appears; no result is saved",,,,,
+TC05,Zero weight,"Application running","Enter 0 kg and 175 cm; select Calculate","Localized invalid-input message appears; no result is saved",,,,,
+TC06,Negative weight,"Application running","Enter -5 kg and 175 cm; select Calculate","Localized invalid-input message appears; no result is saved",,,,,
+TC07,Zero height,"Application running","Enter 70 kg and 0 cm; select Calculate","Localized invalid-input message appears; no result is saved",,,,,
+TC08,Negative height,"Application running","Enter 70 kg and -175 cm; select Calculate","Localized invalid-input message appears; no result is saved",,,,,
+TC09,Language switching,"Application running","Switch EN, FR, UR, VI and FA; inspect labels and direction","Labels change to selected language; RTL direction is used for Urdu and Persian",,,,,
+TC10,Persistence and database outage,"Application running; first run with database available, then repeat with DB unavailable","Calculate BMI once with database available and once with database stopped","Available DB stores result; application remains responsive and displays calculation when DB is unavailable",,,,,
