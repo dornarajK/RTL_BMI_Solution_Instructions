@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3' // Configure this name in Manage Jenkins > Tools.
+        maven 'Maven3'
     }
 
     parameters {
@@ -12,6 +12,10 @@ pipeline {
     environment {
         SONARQUBE_SERVER = 'SonarQubeServer'
         DOCKERHUB_CREDENTIALS_ID = 'Docker_Hub'
+    }
+
+    triggers {
+        githubPush()
     }
 
     stages {
@@ -24,12 +28,6 @@ pipeline {
         stage('Build and Test with Coverage') {
             steps {
                 bat 'mvn -B clean verify'
-            }
-            post {
-                always {
-                    junit allowEmptyResults: true, testResults: 'target/surefire-reports/TEST-*.xml'
-                    archiveArtifacts allowEmptyArchive: true, artifacts: 'target/site/jacoco/jacoco.xml'
-                }
             }
         }
 
